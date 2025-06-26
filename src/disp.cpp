@@ -1,30 +1,13 @@
-#include "global.h"
 #include "disp.h"
+#include "global.h"
 #include "vessel.h"
-
-// Keypad Configuration
-const byte ROWS = 5;
-const byte COLS = 4;
-char keys[ROWS][COLS] = {
-  {'F','S','#','*'},
-  {'1','2','3','^'},
-  {'4','5','6','v'},
-  {'7','8','9','E'},
-  {'<','0','>','K'}
-};
-
-byte colPins[4] = {4, 5, 6, 7};
-byte rowPins[5] = {12, 11, 10, 9, 8};
-Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+#include <LiquidCrystal_I2C.h>
 
 // LCD Configuration
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-
 // Shared variables (define here)
-float flowRate = 0.0;
-bool useDummyData = true;
-unsigned long dummyPulseInterval = 1000;
+
 
 void updateDisplay() {
   char buf[7];
@@ -42,26 +25,24 @@ void updateDisplay() {
     lcd.print("OFF");           // Valve state label
   }
 
-if(vessel_update || millis() - lastBlinkTime >= 1000){ // update every second
+  if(vessel_update || millis() - lastBlinkTime >= 1000){ // update every second
     lastBlinkTime = millis();
     blinkState = !blinkState;
     
     lcd.setCursor(14, 0);         // ………V:y   (right-most)
-          // Vessel label
     if(currentVessel > 9) {  // no valid vessel detected
-          if(blinkState) {
-              lcd.print("V-");    // blink "V"
-          } else {
-              lcd.print("  ");    // clear the space to create blinking effect
-          }
+      if(blinkState) {
+        lcd.print("V-");    // blink "V"
+      } else {
+        lcd.print("  ");    // clear the space to create blinking effect
+      }
     }
     else {
-          lcd.print("V");         // valid vessel detected
+      lcd.print("V");         // valid vessel detected
       lcd.print(currentVessel);        
-  }
+    }
     vessel_update = false;        // Reset flag after updating display
   }
-
 
   /* -------- second row -------- */
   lcd.setCursor(0, 1);          // T:xxxL
@@ -81,36 +62,5 @@ if(vessel_update || millis() - lastBlinkTime >= 1000){ // update every second
   lcd.print(':');              // separator
   if (seconds < 10) lcd.print('0');
   lcd.print(seconds);          // seconds
-}
-
-void handleKeypress() {
-  char key = keypad.getKey();
-  if (!key) return; // No key pressed
-  switch (key) {
-    case 'E': // ESC key
-      // Stop flow and reset counters
-      valveState = LOW;
-      valveoff;
-      totalVolume = 0;
-      totalTime = 0;
-      break;
-    case '^': // Up arrow - increase flow (simulated)
-      if (useDummyData) dummyPulseInterval = max(100, dummyPulseInterval - 100);
-      break;
-    case 'v': // Down arrow - decrease flow (simulated)
-      if (useDummyData)
-      dummyPulseInterval += 100;
-      break;
-    case 'S': // Function key
-      // Toggle solenoid valve
-      valveState = !valveState;
-      if(valveState){
-        valveon;
-      }else{
-        valveoff; 
-      }
-      break;
-    // Add other key handlers as needed
-  }
 }
 

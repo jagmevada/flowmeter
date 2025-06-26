@@ -1,4 +1,5 @@
 #pragma once
+#include <Arduino.h>
 // Pin Definitions
 #define FLOW_SENSOR_PIN 3   // Interrupt-capable pin for flow sensor
 #define SOLENOID_VALVE_PIN 2 // Control pin for solenoid valve
@@ -26,3 +27,6 @@ extern u8 currentVessel; // Only declare here, do not define
 extern bool valveState; // State of the solenoid valve
 extern bool blinkState; 
 extern u32 lastBlinkTime; 
+extern f32 flowRate;
+extern bool useDummyData;
+extern u32 dummyPulseInterval;

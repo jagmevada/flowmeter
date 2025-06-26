@@ -2,6 +2,7 @@
 #include "global.h"
 #include "disp.h"
 #include "vessel.h"
+#include "keypads.h"
 
 unsigned long lastDisplayUpdate = 0;
 const long displayUpdateInterval = 200;
@@ -21,8 +22,8 @@ void setup() {
 
 void loop() {
     handleKeypress();
-  detectVessel();
-  if (millis() - lastDisplayUpdate > displayUpdateInterval) {
+    detectVessel();
+    if (millis() - lastDisplayUpdate > displayUpdateInterval) {
     updateDisplay();
     lastDisplayUpdate = millis();
   }
