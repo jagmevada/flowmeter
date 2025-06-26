@@ -10,7 +10,7 @@ const long displayUpdateInterval = 200;
 void setup() {
   Serial.begin(9600);
   pinMode(SOLENOID_VALVE_PIN, OUTPUT);
-  valveoff; // Ensure the valve is off at startup
+  valveoff(); // Ensure the valve is off at startup
   Wire.begin();
   Wire.setClock(400000);
   lcd.init();

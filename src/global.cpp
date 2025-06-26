@@ -9,3 +9,10 @@ u32 lastBlinkTime = 0; // Initialize last blink time to 0
 f32 flowRate = 0.0;
 bool useDummyData = true;
 u32 dummyPulseInterval = 1000;
+
+uint16_t setVolume = 0;
+uint16_t dispensedVolume = 0;
+bool inputMode = false;
+char volumeInput[6] = {0};
+uint8_t inputPos = 0;
+OperationMode currentMode = MODE_NORMAL;
