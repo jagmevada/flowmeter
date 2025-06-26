@@ -1,27 +1,36 @@
 #include <Wire.h>
+<<<<<<< HEAD
 #include <global.h>
 
 
+=======
+#include "global.h"
+#include "hmi.h"
+#include "vessel.h"
+
+unsigned long lastDisplayUpdate = 0;
+const long displayUpdateInterval = 200;
+>>>>>>> temp-branch
 
 void setup() {
-  // Initialize serial communication
   Serial.begin(9600);
-  
-  // Initialize I2C LCD at 400kHz
+  pinMode(SOLENOID_VALVE_PIN, OUTPUT);
+  valveoff; // Ensure the valve is off at startup
   Wire.begin();
   Wire.setClock(400000);
   lcd.init();
   lcd.backlight();
   lcd.clear();
+<<<<<<< HEAD
   
   // Initialize pins
   pinMode(SOLENOID_VALVE_PIN, OUTPUT);
   valveoff; // Ensure valve is off at startup 
   
   // Initial display
+=======
+>>>>>>> temp-branch
   updateDisplay();
-  
-  // Record start time
   oldTime = millis();
 }
 
@@ -34,6 +43,7 @@ void setup() {
  * display periodically.
  */
 void loop() {
+<<<<<<< HEAD
     handleKeypress(); // Check for key presses
   // Generate dummy pulses if in test mode
   if (useDummyData && (millis() - lastDummyPulse > dummyPulseInterval)) {
@@ -43,15 +53,17 @@ void loop() {
   // if (useDummyData) simulateFlowProfile();
   
   // Detect current vessel
+=======
+    handleKeypress();
+>>>>>>> temp-branch
   detectVessel();
-  
-  // Update display periodically
   if (millis() - lastDisplayUpdate > displayUpdateInterval) {
     updateDisplay();
     lastDisplayUpdate = millis();
   }
 }
 
+<<<<<<< HEAD
 
 
 
@@ -59,3 +71,5 @@ void loop() {
 
 // End of file
 // This code is designed to run on an Arduino Nano with a YF-B5 flow sensor
+=======
+>>>>>>> temp-branch

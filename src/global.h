@@ -1,9 +1,17 @@
+<<<<<<< HEAD
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
+=======
+#pragma once
+// Pin Definitions
+#define FLOW_SENSOR_PIN 3   // Interrupt-capable pin for flow sensor
+#define SOLENOID_VALVE_PIN 2 // Control pin for solenoid valve
+#define VESSEL_DETECT_PIN A0 // Analog pin for vessel detection
+>>>>>>> temp-branch
 
 #define valveoff digitalWrite(SOLENOID_VALVE_PIN, LOW);
 #define valveon  digitalWrite(SOLENOID_VALVE_PIN, HIGH);
@@ -18,6 +26,7 @@ typedef short i16;
 typedef int i32;
 typedef long long i64;
 
+<<<<<<< HEAD
 // Pin Definitions
 #define FLOW_SENSOR_PIN 3   // Interrupt-capable pin for flow sensor
 #define SOLENOID_VALVE_PIN 2 // Control pin for solenoid valve
@@ -72,3 +81,14 @@ void updateDisplay();            // refreshes the 1602 LCD
 #endif
 
 #endif // GLOBAL_H
+=======
+
+extern f32 totalVolume;
+extern u32 totalTime;
+extern u32 oldTime;
+extern bool vessel_update;
+extern u8 currentVessel; // Only declare here, do not define
+extern bool valveState; // State of the solenoid valve
+extern bool blinkState; 
+extern u32 lastBlinkTime; 
+>>>>>>> temp-branch
