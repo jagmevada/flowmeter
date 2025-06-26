@@ -1,5 +1,5 @@
 #include "global.h"
-#include "hmi.h"
+#include "disp.h"
 #include "vessel.h"
 
 // Keypad Configuration

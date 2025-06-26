@@ -1,6 +1,6 @@
 #include <Wire.h>
 #include "global.h"
-#include "hmi.h"
+#include "disp.h"
 #include "vessel.h"
 
 unsigned long lastDisplayUpdate = 0;
