@@ -1,7 +1,8 @@
+#include "keypads.h"
 #include "global.h"
 #include <Keypad.h>
 #include "vessel.h"
-#include "keypads.h"
+#include "disp.h"
 
 // Debug macro
 #define DEBUG 1
@@ -28,14 +29,6 @@ byte colPins[4] = {4, 5, 6, 7};
 byte rowPins[5] = {12, 11, 10, 9, 8};
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-// State variables
-enum KeypadState { KP_IDLE, KP_INPUT, KP_QUICK_ADJUST };
-static KeypadState keypadState = KP_IDLE;
-
-static uint8_t stepSize = 1; // Default step size
-static bool quickAdjustPending = false;
-static uint8_t quickAdjustTempStep = 0;
-
 void handleKeypress() {
     char key = keypad.getKey();
     if (!key) return;
@@ -43,10 +36,12 @@ void handleKeypress() {
 
     // F1 toggles mode
     if (key == 'F') {
+        if(!setmode){
         currentMode = (currentMode == MODE_NORMAL) ? MODE_CALIBRATION : MODE_NORMAL;
         DBG_PRINT("Mode changed to: ");
         DBG_PRINTLN(currentMode == MODE_NORMAL ? "NORMAL" : "CALIBRATION");
         // Optionally: updateDisplay();
+        }
         return;
     }
 
@@ -55,8 +50,8 @@ void handleKeypress() {
         switch (keypadState) {
         case KP_IDLE:
             if (key == '*') {
+                setmode = true;                 
                 DBG_PRINTLN("Entering input mode");
-                // Start or modify set volume
                 inputMode = true;
                 if (setVolume > 0) {
                     snprintf(volumeInput, sizeof(volumeInput), "%u", setVolume);
@@ -66,105 +61,155 @@ void handleKeypress() {
                     inputPos = 0;
                 }
                 keypadState = KP_INPUT;
+                displayUpdateInterval = 100; // Faster display update in input mode
                 // Optionally: updateDisplay();
-            } else if (key == '#') {
-                DBG_PRINTLN("Quick adjust mode start");
-                quickAdjustPending = true;
-                quickAdjustTempStep = 0;
-                keypadState = KP_QUICK_ADJUST;
+            } else if (key == '<') {
+                if(setVolume > 1) {
+                setVolume--;
+                DBG_PRINT("Reduce set volume: ");
+                DBG_PRINTLN(setVolume);
+                lcd_currentvolume_update(); // Update display immediately
+                }
+                // Optionally: updateDisplay();
+             } else if (key == '>') {
+                if (setVolume < MAX_VOLUME) {
+                    setVolume++;
+                    DBG_PRINT("Increase set volume: ");
+                    DBG_PRINTLN(setVolume);
+                    lcd_currentvolume_update(); // Update display immediately
+                }
+                    // Optionally: updateDisplay();
             } else if (key == '^') {
-                setVolume += stepSize;
-                DBG_PRINT("Set volume increased to: "); DBG_PRINTLN(setVolume);
-                if (setVolume < dispensedVolume) {
-                    setVolume = dispensedVolume;
-                    valveoff();
-                    valveState = false;
-                    DBG_PRINTLN("Set volume < dispensed, valve closed");
+                if(setVolume < ((u16) MAX_VOLUME - (u16)stepSize)) {
+                    setVolume += stepSize;
+                    DBG_PRINT("Set volume increased to: ");
+                    DBG_PRINTLN(setVolume);
+                    lcd_currentvolume_update(); // Update display immediately
                 }
                 // Optionally: updateDisplay();
             } else if (key == 'v') {
-                if (setVolume > stepSize)
+                if (setVolume >= stepSize) {
                     setVolume -= stepSize;
-                else
+                } else {
                     setVolume = 0;
-                DBG_PRINT("Set volume decreased to: "); DBG_PRINTLN(setVolume);
+                }
+                lcd_currentvolume_update(); // Update display immediately
+                DBG_PRINT("Set volume decreased to: ");
+                    DBG_PRINTLN(setVolume);
                 if (setVolume < dispensedVolume) {
-                    setVolume = dispensedVolume;
+                    // setVolume = dispensedVolume;
                     valveoff();
                     valveState = false;
+                    lcd_valvestate_update();
                     DBG_PRINTLN("Set volume < dispensed, valve closed");
                 }
                 // Optionally: updateDisplay();
             } else if (key == 'S') {
+                
                 valveState = !valveState;
-                DBG_PRINT("Manual valve toggle, state: "); DBG_PRINTLN(valveState ? "ON" : "OFF");
-                if(valveState) valveon(); else valveoff();
+                if(valveState){
+                      if(setVolume > dispensedVolume) {
+                        valveon();
+                        flow.read();
+                        DBG_PRINTLN("Valve manual on");
+                    } else {
+                        DBG_PRINTLN("Set volume too low, valve cannot be turned on");
+                        valveState = false; // Reset valve state if it cannot be turned on
+                    }
+                }
+                else{
+                    DBG_PRINTLN("Valve manual off");
+                    valveoff(); // Turn off the valve if toggled off
+                }            
+                lcd_valvestate_update(); // Update valve state on display
+           
+            } else if (key == '#') {
+                // Reset timer
+                elapsedSeconds = 0;
+                lcd_timeupdate(); // Update display immediately
+                DBG_PRINTLN("Timer reset to 0 by # key");
+                // Optionally: updateDisplay();
             }
             break;
 
         case KP_INPUT:
-            if (key >= '0' && key <= '9' && inputPos < 5) {
-                volumeInput[inputPos++] = key;
-                volumeInput[inputPos] = '\0';
-                DBG_PRINT("Input buffer: "); DBG_PRINTLN(volumeInput);
-                // Optionally: updateDisplay();
-            } else if (key == '<' && inputPos > 0) {
-                volumeInput[--inputPos] = '\0';
-                DBG_PRINT("Input buffer (backspace): "); DBG_PRINTLN(volumeInput);
-                // Optionally: updateDisplay();
-            } else if (key == 'K') {
-                setVolume = atoi(volumeInput);
-                inputMode = false;
-                keypadState = KP_IDLE;
-                DBG_PRINT("Input confirmed, set volume: "); DBG_PRINTLN(setVolume);
-                if (setVolume < dispensedVolume) {
-                    setVolume = dispensedVolume;
-                    valveoff();
-                    valveState = false;
-                    DBG_PRINTLN("Set volume < dispensed, valve closed");
+
+            if (key >= '0' && key <= '9' && inputPos < 3) {
+                DBG_PRINT("setVolume: ");
+                DBG_PRINTLN(setVolume);
+                    // Try appending the digit and check result
+                    volumeInput[inputPos] = key;
+                    volumeInput[inputPos + 1] = '\0';
+
+                    int tempVolume = atoi(volumeInput);
+                    if (tempVolume <= MAX_VOLUME) {
+                        inputPos++;
+                        DBG_PRINT("Input buffer: "); DBG_PRINTLN(volumeInput);
+                        // Optionally: updateDisplay();
+                    } else {
+                        // Revert the character if it exceeds limit
+                        volumeInput[inputPos] = '\0';
+                        DBG_PRINTLN("Ignored: volume exceeds 999");
+                    }
+
+                } else if (key == '<' && inputPos > 0) {
+                    // Handle backspace
+                    volumeInput[--inputPos] = '\0';
+                    DBG_PRINT("Input buffer (backspace): "); DBG_PRINTLN(volumeInput);
+                    // Optionally: updateDisplay();
+
+                } else if (key == 'K') {
+                    // Confirm input
+                    setVolume = atoi(volumeInput);
+                    inputMode = false;
+                    keypadState = KP_IDLE;
+                    displayUpdateInterval = 200; // Restore normal update interval
+                    DBG_PRINT("Input confirmed, set volume: "); DBG_PRINTLN(setVolume);
+
+                    if (setVolume < dispensedVolume) {
+                        // setVolume = dispensedVolume;
+                        valveoff();
+                        valveState = false;
+                        lcd_valvestate_update();
+                        DBG_PRINTLN("Set volume < dispensed, valve closed");
+                    }
+                    setmode = false; // Reset set mode flag
+                    // Optionally: updateDisplay();
+
+                } else if (key == 'E') {
+                    // Cancel input
+                    inputMode = false;
+                    keypadState = KP_IDLE;
+                    displayUpdateInterval = 200; // Restore normal update interval
+                    DBG_PRINTLN("Input cancelled");
+                    setmode = false; // Reset set mode flag
+                    // Optionally: updateDisplay();
+                } else if (key == '#') {
+                    // Complete reset in input mode
+                    elapsedSeconds = 0;
+                    setVolume = 0;
+                    dispensedVolume = 0;
+                    dispensedVolumef = 0.0; // Reset float volume
+                    volumeInput[0] = '\0';
+                    inputPos = 0;
+                    inputMode = false;
+                    keypadState = KP_IDLE;
+                    valveoff(); // Ensure valve is off
+                    valveState = false; // Reset valve state
+                    
+                    clear2ndrow = true; // Clear second row on reset                   
+                    displayUpdateInterval = 200; // Restore normal update interval
+                    DBG_PRINTLN("Complete reset: timer, setVolume, dispensedVolume set to 0 by # in input mode");
+                    setmode = false;
+                    flow.read();
+                    flow.resetPulse(); // Reset flow sensor pulse count
+                    flow.resetVolume(); // Reset flow sensor volume
                 }
-                // Optionally: updateDisplay();
-            } else if (key == 'E') {
-                inputMode = false;
-                keypadState = KP_IDLE;
-                DBG_PRINTLN("Input cancelled");
-                // Optionally: updateDisplay();
-            }
+            break;
+default:
+            DBG_PRINTLN("Unknown key in input mode");
             break;
 
-        case KP_QUICK_ADJUST:
-            if (quickAdjustPending && key >= '0' && key <= '9') {
-                quickAdjustTempStep = key - '0';
-                DBG_PRINT("Quick adjust step set to: "); DBG_PRINTLN(quickAdjustTempStep == 0 ? 10 : quickAdjustTempStep);
-                // Wait for up/down
-            } else if (quickAdjustPending && (key == '^' || key == 'v')) {
-                stepSize = (quickAdjustTempStep == 0) ? 10 : quickAdjustTempStep;
-                DBG_PRINT("Quick adjust direction: "); DBG_PRINTLN(key == '^' ? "UP" : "DOWN");
-                if (key == '^') {
-                    setVolume += stepSize;
-                } else {
-                    if (setVolume > stepSize)
-                        setVolume -= stepSize;
-                    else
-                        setVolume = 0;
-                }
-                DBG_PRINT("Set volume after quick adjust: "); DBG_PRINTLN(setVolume);
-                if (setVolume < dispensedVolume) {
-                    setVolume = dispensedVolume;
-                    valveoff();
-                    valveState = false;
-                    DBG_PRINTLN("Set volume < dispensed, valve closed");
-                }
-                keypadState = KP_IDLE;
-                quickAdjustPending = false;
-                // Optionally: updateDisplay();
-            } else if (key == 'E') {
-                keypadState = KP_IDLE;
-                quickAdjustPending = false;
-                DBG_PRINTLN("Quick adjust cancelled");
-                // Optionally: updateDisplay();
-            }
-            break;
         }
     } else if (currentMode == MODE_CALIBRATION) {
         // Calibration mode logic to be added later

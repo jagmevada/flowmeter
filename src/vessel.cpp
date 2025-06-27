@@ -5,7 +5,7 @@
 u8 currentVessel = 0; // Only define here
 
 void detectVessel() {
-  u16 sensorValue = analogRead(VESSEL_DETECT_PIN);
+  u16 sensorValue =102;// analogRead(VESSEL_DETECT_PIN);
   u8 detectedVessel = 0;  // Default: no vessel detected
 
   // Map sensor value to vessel index based on predefined resistor values
@@ -41,5 +41,7 @@ void detectVessel() {
     totalVolume = 0;
     totalTime = 0;
     vessel_update = true;
+    Serial.print("Detected vessel: ");
+    Serial.println(currentVessel);
   }
 }

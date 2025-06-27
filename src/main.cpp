@@ -3,10 +3,13 @@
 #include "disp.h"
 #include "vessel.h"
 #include "keypads.h"
-
+#include <FlowSensor.h>
+FlowSensor flow(NON_LINEAR, 3); // or your actual constructor
 unsigned long lastDisplayUpdate = 0;
-const long displayUpdateInterval = 200;
 
+void countPulse() {
+  flow.count();
+}
 void setup() {
   Serial.begin(9600);
   pinMode(SOLENOID_VALVE_PIN, OUTPUT);
@@ -17,15 +20,68 @@ void setup() {
   lcd.backlight();
   lcd.clear();
   updateDisplay();
+  flow.begin(countPulse);
+  flow.setCalibration(15, 3);  // Vessel-specific calibration
+  flow.read();
+  flow.resetVolume(); // Reset volume at startup
+  flow.resetPulse(); // Reset pulse count at startup
   oldTime = millis();
+  
 }
 
 void loop() {
+
+  static u32 lastTick = 0;
+if (valveState ) {
+  if(prevvalveState != valveState){
+    lastTick = millis(); // Reset the tick counter when valve state changes
+    lcd_valvestate_update();
+  }  
+  if (millis() - lastTick >= 956) {
+      lastTick = millis(); // Update lastTick to current time
+      elapsedSeconds++;
+      lcd_timeupdate();
+
+      flow.read();
+      flowRate = flow.getFlowRate_m(); // Get flow rate in L/min
+      
+      dispensedVolumef += flow.getVolume(); // Update dispensed volume
+      dispensedVolume = (uint16_t)dispensedVolumef; // Convert to integer for display
+      flow.resetVolume();
+      Serial.print("pulse :");
+      Serial.print(flow.getPulse());
+      Serial.print("Flow Rate: ");
+      Serial.print(flow.getFlowRate_s());
+      Serial.print("\tvolume: ");
+      Serial.println(flow.getVolume());
+  }  
+  if(dispensedVolume >= setVolume){
+    valveoff();
+    valveState = false;
+    lcd_valvestate_update();
+  }
+  prevvalveState = valveState;
+  }
+  else{
+    // i=0;
+  }
+  
     handleKeypress();
     detectVessel();
     if (millis() - lastDisplayUpdate > displayUpdateInterval) {
     updateDisplay();
     lastDisplayUpdate = millis();
+    //  i++;
   }
 }
 
+    //   static u8 i=0;
+    // if(i==2){
+    //   flowRate++;
+    //   if(flowRate>=30.0){
+    //     flowRate=0.0;
+    //     dispensedVolume = 0;
+    //   }
+    //   dispensedVolume+= 5;
+    // i=0;
+    // }
