@@ -22,7 +22,7 @@ void setup() {
   lcd.clear();
   updateDisplay();
   flow.begin(countPulse);
-  flow.setCalibration(15, 3);  // Vessel-specific calibration
+  flow.setCalibration(68.0/60.0, 0);  // Vessel-specific calibration
   flow.read();
   flow.resetVolume(); // Reset volume at startup
   flow.resetPulse(); // Reset pulse count at startup
