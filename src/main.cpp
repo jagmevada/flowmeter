@@ -1,9 +1,10 @@
 #include <Wire.h>
+#include <FlowSensor.h>
 #include "global.h"
 #include "disp.h"
 #include "vessel.h"
 #include "keypads.h"
-#include <FlowSensor.h>
+
 FlowSensor flow(NON_LINEAR, 3); // or your actual constructor
 unsigned long lastDisplayUpdate = 0;
 
@@ -30,7 +31,40 @@ void setup() {
 }
 
 void loop() {
+  handleKeypress();
+  static bool cal = false;
+  if(currentMode == MODE_CALIBRATION) {
 
+    if(cal == false){
+      Serial.println("in cal mode");
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print ("Cal");
+      caldataupdate();
+      cal = true;
+      flow.read();
+      flow.resetPulse();
+      flow.resettime();
+      flow.resetVolume();
+      flow.read();
+      Serial.println("all reset");
+    }
+
+    if(valveState){
+        static u32 ts= millis();
+        if(millis()-ts >997){
+          ts= millis();
+          flow.read();
+          caldataupdate();
+        }
+      }
+      else{ 
+        // Serial.println("Valve manual off");
+      }
+
+  }
+  else{
+    cal = false;
   static u32 lastTick = 0;
 if (valveState ) {
   if(prevvalveState != valveState){
@@ -66,13 +100,17 @@ if (valveState ) {
     // i=0;
   }
   
-    handleKeypress();
+    
     detectVessel();
     if (millis() - lastDisplayUpdate > displayUpdateInterval) {
     updateDisplay();
     lastDisplayUpdate = millis();
     //  i++;
   }
+
+  }
+  delay(1);
+
 }
 
     //   static u8 i=0;

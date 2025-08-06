@@ -16,6 +16,7 @@
 #include "Arduino.h"
 #include "FlowSensor_Type.h"
 #define NON_LINEAR 9999 // Arbitrary large unique value
+#define MILLISPERSEC 996.7f // in seconds
 /**
  * @brief FlowSensor Class > Sensor(uint8_t Type, uint8_t Pin)
  * 
@@ -27,14 +28,16 @@ private:
 	bool _isNonLinear = false;
 	volatile unsigned long _totalpulse;
 	volatile unsigned long _pulse;
-	float _pulse1liter;
-	float _flowratehour;
-	float _flowrateminute;
-	float _flowratesecond;
-	float _volume;
+	float _pulse1liter=0.0f;
+	float _flowratehour =0.0f;
+	float _flowrateminute = 0.0f;
+	float _flowratesecond = 0.0f;
+	float _volume= 0.0f;
 	unsigned long _timebefore = millis();
 	float _multiplier = 15.0f;
 	float _offset = 3.0f;
+	float _deltatime = 0.1f;
+	float _totaltime = 0.0f;
 
 public:
 	FlowSensor(uint16_t type, uint8_t pin);
@@ -51,6 +54,9 @@ public:
 	float getVolume();
 	void resetPulse();
 	void resetVolume();
+	float gettime();
+	void resettime();
+	float gettotaltime();
 };
 
 #endif

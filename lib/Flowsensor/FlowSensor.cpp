@@ -24,6 +24,10 @@ FlowSensor::FlowSensor(uint16_t type ,uint8_t pin)
 	this->_pin = pin;
 	this->_pulse1liter = type;
 	this->_isNonLinear = (type == NON_LINEAR);  // Add this
+	this->_volume = 0.0f;
+	this->_totaltime =0.0f;
+	this->_totalpulse =0L;
+	
 }
 
 /**
@@ -80,22 +84,51 @@ void FlowSensor::count()
 void FlowSensor::read(long calibration)
 {
 	unsigned long now = millis();
-	float deltaTime = (now - this->_timebefore) / 1000.0f; // in seconds
+	this->_deltatime = (now - this->_timebefore) / MILLISPERSEC;
 	this->_timebefore = now;
 	if (_isNonLinear) {
-		float freq = this->_pulse / deltaTime;
-		this->_flowratesecond = ((_offset + freq) / _multiplier) / 60.0f;  // L/sec
-		this->_volume = this->_flowratesecond *deltaTime;
+	if (this->_pulse > 0 && this->_deltatime > 0) {
+		float freq = this->_pulse / this->_deltatime;
+			if (!isnan(freq) && freq > 0) {
+				this->_flowratesecond = ((_offset + freq) / _multiplier) / 60.0f;
+				this->_volume = this->_flowratesecond * this->_deltatime;
+			} else {
+				this->_flowratesecond = 0;
+				this->_volume = 0;
+			}
+		} else {
+			this->_flowratesecond = 0;
+			this->_volume = 0;
+		}
+
 	} else {
-		this->_flowratesecond = (this->_pulse / (this->_pulse1liter + calibration)) / deltaTime;
-		this->_volume = (this->_pulse / (this->_pulse1liter + calibration));
+		if (this->_deltatime > 0) {
+			this->_flowratesecond = (this->_pulse / (this->_pulse1liter + calibration)) / this->_deltatime;
+			this->_volume = (this->_pulse / (this->_pulse1liter + calibration));
+		} else {
+			this->_flowratesecond = 0;
+			this->_volume = 0;
+		}
 	}
 
+	this->_totaltime += this->_deltatime;
 	this->_totalpulse += this->_pulse;
 	this->_pulse = 0;
 	
 }
 
+
+float FlowSensor::gettime(){
+	return this->_deltatime;
+}
+
+void FlowSensor::resettime(){
+	this->_totaltime = 0.0f;
+}
+
+float FlowSensor::gettotaltime(){
+	return this->_totaltime;
+}
 
 
 /**
@@ -159,6 +192,7 @@ void FlowSensor::resetPulse()
 	this->_pulse=0;
 	this->_totalpulse=0;
 }
+
 
 /**
  * @brief reset Volume

@@ -3,7 +3,6 @@
 #include <Keypad.h>
 #include "vessel.h"
 #include "disp.h"
-
 // Debug macro
 #define DEBUG 1
 #if DEBUG
@@ -198,7 +197,7 @@ void handleKeypress() {
                     valveState = false; // Reset valve state
                     
                     clear2ndrow = true; // Clear second row on reset                   
-                    displayUpdateInterval = 200; // Restore normal update interval
+                    displayUpdateInterval = 200; // Restore normal display update interval
                     DBG_PRINTLN("Complete reset: timer, setVolume, dispensedVolume set to 0 by # in input mode");
                     setmode = false;
                     flow.read();
@@ -212,7 +211,36 @@ default:
 
         }
     } else if (currentMode == MODE_CALIBRATION) {
-        // Calibration mode logic to be added later
-        // For now, ignore all keys except 'F'
+        if (key == 'S') {
+                DBG_PRINTLN("S prssed");
+                valveState = !valveState;
+                if(valveState){
+                    lcd.clear();
+                    flow.read();
+                    flow.resetPulse();
+                    flow.resetVolume();
+                    flow.resettime();
+                    flow.getVolume();
+                    valveon();
+                    flow.read();
+                    dispensedVolumef=0;
+                    caldataupdate(); 
+                    DBG_PRINTLN("valve ON");
+                }else{
+                    flow.read();
+                    count = flow.getPulse();
+                    timems = flow.gettotaltime();
+                    valveoff(); 
+                    caldataupdate(); 
+                    DBG_PRINTLN("valve OFF");
+                }
+                lcd_valvestate_update(); // Update valve state on display
+            }else{
+                // other key input 
+            }
+    }else{
+// other modes
     }
 }
+
+

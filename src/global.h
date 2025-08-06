@@ -53,3 +53,5 @@ extern bool clear2ndrow;
 extern u32 displayUpdateInterval;
 extern bool setmode; // Flag to indicate if set mode is active
 extern FlowSensor flow;
+extern volatile double timems;
+extern volatile u32 count;

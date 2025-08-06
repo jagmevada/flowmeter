@@ -14,7 +14,7 @@ LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COLS, LCD_ROWS);
 
 static DisplayPage currentPage = PAGE_MAIN;
 static unsigned long lastUpdate = 0;
-
+extern FlowSensor flow;
 void initDisplay() {
     lcd.init();
     lcd.backlight();
@@ -120,9 +120,9 @@ void showCalibrationPage() {
 
     // Placeholder for calibration info/page
     lcd.setCursor(0, 0);
-    lcd.print("CALIBRATION MODE");
-    lcd.setCursor(0, 1);
-    lcd.print("(To be implemented)");
+    lcd.print("C");
+
+
 }
 
 void dispBlink() {
@@ -207,4 +207,25 @@ void lcd_timeupdate(){
     lcd.print(min); lcd.print(":");
     if (sec < 10) lcd.print("0");
     lcd.print(sec);
+}
+
+void caldataupdate(){
+    timems =  flow.gettotaltime();
+    count= flow.getPulse();   
+    lcd.setCursor(0, 0);
+    lcd.print("T:");
+    lcd.print(timems, 1);
+    lcd.setCursor(0, 1);
+    lcd.print("P:");
+    lcd.print(count);
+    Serial.print("Time: ");
+    Serial.print(timems);
+    Serial.print("\tpulse: ");
+    Serial.println(count);
+    lcd.setCursor(8, 1);
+    lcd.print("V:");
+    dispensedVolumef += (float) flow.getVolume(); // of; // Update dispensed volume
+    lcd.print(dispensedVolumef , 1);
+    Serial.println(dispensedVolumef);
+    lcd_valvestate_update();
 }
