@@ -7,12 +7,33 @@
 
 FlowSensor flow(NON_LINEAR, 3); // or your actual constructor
 unsigned long lastDisplayUpdate = 0;
+// Battery monitoring
+#define VBATCUTOFF 2.8f
+// Assumption: analogReference(EXTERNAL) is wired so that AREF_V matches the external reference voltage used
+#define AREF_V 3.3f
+
+static unsigned long lastVbatRead = 0;
+static const unsigned long VBAT_READ_INTERVAL = 5000UL; // 5 seconds
+
+// Read battery single-cell voltage on A1 and update globals vbat and VBATOK
+void readBattery(){
+  int raw = analogRead(A1);
+  // 10-bit ADC
+  float measured = (raw * (AREF_V / 1023.0f));
+  vbat = measured; // store as single-cell voltage
+  if(vbat < VBATCUTOFF){
+    VBATOK = false; // LOW
+  } else {
+    VBATOK = true; // HIGH
+  }
+}
 
 void countPulse() {
   flow.count();
 }
 void setup() {
   Serial.begin(9600);
+  analogReference(EXTERNAL);     // using your external AREF
   pinMode(SOLENOID_VALVE_PIN, OUTPUT);
   valveoff(); // Ensure the valve is off at startup
   Wire.begin();
@@ -27,11 +48,18 @@ void setup() {
   flow.resetVolume(); // Reset volume at startup
   flow.resetPulse(); // Reset pulse count at startup
   oldTime = millis();
-  
+      
 }
 
+
 void loop() {
+
   handleKeypress();
+  // Periodically read battery voltage
+  if (millis() - lastVbatRead > VBAT_READ_INTERVAL) {
+    lastVbatRead = millis();
+    readBattery();
+  }
   static bool cal = false;
   if(currentMode == MODE_CALIBRATION) {
 

@@ -30,3 +30,6 @@ u32 displayUpdateInterval = 200; // Global variable for display update interval
 bool setmode = false;
 volatile double timems = 0.0;
 volatile u32 count =0;
+// Battery monitoring defaults
+float vbat = 3.6; // measured single-cell voltage
+bool VBATOK = true; // default HIGH (OK)

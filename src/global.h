@@ -5,8 +5,8 @@
 #include <FlowSensor.h>
 #define MAX_VOLUME 999
 // Pin Definitions
-#define FLOW_SENSOR_PIN 3   // Interrupt-capable pin for flow sensor
-#define SOLENOID_VALVE_PIN 2 // Control pin for solenoid valve
+#define FLOW_SENSOR_PIN 2   // Interrupt-capable pin for flow sensor
+#define SOLENOID_VALVE_PIN A2 // Control pin for solenoid valve
 #define VESSEL_DETECT_PIN A0 // Analog pin for vessel detection
 
 #define valveoff() digitalWrite(SOLENOID_VALVE_PIN, LOW)
@@ -55,3 +55,6 @@ extern bool setmode; // Flag to indicate if set mode is active
 extern FlowSensor flow;
 extern volatile double timems;
 extern volatile u32 count;
+// Battery monitoring
+extern float vbat; // Single-cell voltage (LFP single cell)
+extern bool VBATOK; // Battery OK flag
