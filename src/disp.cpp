@@ -74,13 +74,20 @@ void showMainPage() {
 
 void showInputPage() {
     // Row 2: S:fff/xxxL  (set/total)
-
+    // Clear entire second row first to avoid leftover characters from other pages
+    lcd.setCursor(0, 1);
+    lcd.print("                "); // 16 spaces
+    // Start writing content
     lcd.setCursor(0, 1);
     lcd.print("S:");
-       lcd.print("        ");
-       lcd.setCursor(2, 1);
+    // Print dispensedVolume right-aligned into 3 chars at columns 2..4
     uint16_t dispVal = dispensedVolume > MAX_VOLUME ? MAX_VOLUME : dispensedVolume;
-    lcd.print(dispVal);
+    char dBuf[4];
+    snprintf(dBuf, sizeof(dBuf), "%3u", dispVal);
+    lcd.setCursor(2, 1);
+    lcd.print(dBuf);
+    // Separator at column 5
+    lcd.setCursor(5, 1);
     lcd.print("/");
     // Blinking logic for set volume entry
     static unsigned long lastBlink = 0;
@@ -91,7 +98,7 @@ void showInputPage() {
             blinkOn = !blinkOn;
             lastBlink = now;
         }
-        if (blinkOn) {
+    if (blinkOn) {
             // Show live input if editing, else setVolume
             char buf[4] = "   ";
             if (inputPos > 0) {
@@ -102,15 +109,19 @@ void showInputPage() {
             } else {
                 buf[2] = '0'; buf[0] = buf[1] = ' ';
             }
+            // Print set-volume right-aligned at cols 6..8
+            lcd.setCursor(6,1);
             lcd.print(buf);
         } else {
             // Print spaces to blink out the entry
+            lcd.setCursor(6,1);
             lcd.print("   ");
         }
     } else {
         uint16_t setVal = setVolume > 999 ? 999 : setVolume;
         char buf[4];
         snprintf(buf, sizeof(buf), "%3u", setVal);
+        lcd.setCursor(6,1);
         lcd.print(buf);
     }
     lcd.print("L");
