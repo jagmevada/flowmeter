@@ -10,8 +10,8 @@ unsigned long lastDisplayUpdate = 0;
 // Battery monitoring
 #define VBATCUTOFF 2.8f
 // Assumption: analogReference(EXTERNAL) is wired so that AREF_V matches the external reference voltage used
-#define AREF_V 3.3f
-
+#define AREF_V 3.313f 
+#define BATSCALE 0.90238f  //(4*Vadc/Vbat)
 static unsigned long lastVbatRead = 0;
 static const unsigned long VBAT_READ_INTERVAL = 5000UL; // 5 seconds
 
@@ -19,7 +19,7 @@ static const unsigned long VBAT_READ_INTERVAL = 5000UL; // 5 seconds
 void readBattery(){
   int raw = analogRead(A1);
   // 10-bit ADC
-  float measured = (raw * (AREF_V / 1023.0f));
+  float measured = (raw * (AREF_V / 1023.0f))/BATSCALE;  
   vbat = measured; // store as single-cell voltage
   if(vbat < VBATCUTOFF){
     VBATOK = false; // LOW
@@ -59,6 +59,7 @@ void loop() {
   if (millis() - lastVbatRead > VBAT_READ_INTERVAL) {
     lastVbatRead = millis();
     readBattery();
+    Serial.println(vbat,3);
   }
   static bool cal = false;
   if(currentMode == MODE_CALIBRATION) {

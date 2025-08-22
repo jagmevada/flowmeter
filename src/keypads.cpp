@@ -40,6 +40,7 @@ void handleKeypress() {
         DBG_PRINT("Mode changed to: ");
         DBG_PRINTLN(currentMode == MODE_NORMAL ? "NORMAL" : "CALIBRATION");
         // Optionally: updateDisplay();
+        lcd.clear();
         }
         return;
     }
