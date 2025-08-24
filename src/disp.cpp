@@ -166,8 +166,8 @@ void lcd_valvestate_update(){
 void lcd_vessel_update() {
     lcd.setCursor(14, 0);
     if ((currentVessel >= 0) && (currentVessel < 10)) {
-        lcd.print("V");
-        lcd.print(currentVessel);
+        // lcd.print("V");
+        lcd.print(round(vbat*10));
     } else {
         lcd.print("V-");
     }

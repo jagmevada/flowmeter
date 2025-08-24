@@ -5,7 +5,7 @@
 #include "vessel.h"
 #include "keypads.h"
 
-FlowSensor flow(NON_LINEAR, 3); // or your actual constructor
+FlowSensor flow(NON_LINEAR, FLOW_SENSOR_PIN); // or your actual constructor
 unsigned long lastDisplayUpdate = 0;
 // Battery monitoring
 #define VBATCUTOFF 2.8f
